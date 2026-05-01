@@ -45,10 +45,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         localStorage.setItem('token', authToken);
     };
 
-    const logout = () => {
+    const logout = async () => {
         setUser(null);
         setToken(null);
         localStorage.removeItem('token');
+        const { clearLocalMovies } = await import('../services/db');
+        await clearLocalMovies();
+        window.location.href = '/';
     };
 
     return (
