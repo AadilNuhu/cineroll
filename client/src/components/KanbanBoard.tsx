@@ -24,8 +24,8 @@ const KanbanBoard = () => {
     ];
 
     return (
-        <div className="flex flex-col md:flex-row gap-6 items-start h-full">
-            {columns.map(col => {
+        <div className="mobile-kanban-container md:flex md:flex-row gap-6 items-start h-full">
+            {columns.map((col, index) => {
                 const columnMovies = movies.filter(m => m.status === col.id);
 
                 return (
@@ -33,7 +33,8 @@ const KanbanBoard = () => {
                         key={col.id}
                         onDragOver={handleDragOver}
                         onDrop={(e) => handleDrop(e, col.id)}
-                        className={`flex-1 w-full min-h-[500px] border-t-4 ${col.color} rounded-xl glass-panel p-4 flex flex-col gap-4`}
+                        className={`mobile-kanban-column flex-1 min-h-[500px] border-t-4 ${col.color} rounded-xl glass-panel p-4 flex flex-col gap-4 animate-fade-in`}
+                        style={{ animationDelay: `${index * 0.15}s` }}
                     >
                         <div className="flex items-center justify-between mb-2">
                             <h2 className="font-bold text-lg">{col.title}</h2>
