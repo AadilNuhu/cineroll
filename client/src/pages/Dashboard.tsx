@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import KanbanBoard from '../components/KanbanBoard';
 import { useMovies } from '../contexts/MovieContext';
+import api from '../services/api';
 
 const Dashboard = () => {
     const { addMovie } = useMovies();
@@ -8,15 +9,30 @@ const Dashboard = () => {
     const [title, setTitle] = useState('');
     const [year, setYear] = useState('');
     const [posterUrl, setPosterUrl] = useState('');
+    const [rating, setRating] = useState<number | null>(null);
+    const [notes, setNotes] = useState('');
+    const [isUploading, setIsUploading] = useState(false);
 
-    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setPosterUrl(reader.result as string);
-            };
-            reader.readAsDataURL(file);
+            setIsUploading(true);
+            const formData = new FormData();
+            formData.append('poster', file);
+            try {
+                const res = await api.post('/upload', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+                setPosterUrl(`http://localhost:9000${res.data.url}`);
+            } catch (err) {
+                console.error("Upload failed", err);
+                // Fallback for offline or dev
+                const reader = new FileReader();
+                reader.onloadend = () => setPosterUrl(reader.result as string);
+                reader.readAsDataURL(file);
+            } finally {
+                setIsUploading(false);
+            }
         }
     };
 
@@ -29,13 +45,15 @@ const Dashboard = () => {
             year: parseInt(year) || new Date().getFullYear(),
             poster_url: posterUrl || 'https://via.placeholder.com/300x450?text=No+Poster',
             status: 'not_watched',
-            rating: null,
-            notes: ''
+            rating: rating,
+            notes: notes
         });
 
         setTitle('');
         setYear('');
         setPosterUrl('');
+        setRating(null);
+        setNotes('');
         setShowAdd(false);
     };
 
@@ -56,27 +74,49 @@ const Dashboard = () => {
 
             {showAdd && (
                 <form onSubmit={handleAdd} className="glass-panel p-6 rounded-2xl flex flex-col md:flex-row gap-4 items-center">
-                    <input
-                        type="text" required placeholder="Movie Title"
-                        className="w-full xl:w-auto xl:flex-1 bg-slate-900/50 border border-slate-700 rounded-lg p-3 outline-none focus:border-pink-500"
-                        value={title} onChange={(e) => setTitle(e.target.value)}
-                    />
-                    <input
-                        type="number" placeholder="Year"
-                        className="w-full xl:w-32 bg-slate-900/50 border border-slate-700 rounded-lg p-3 outline-none focus:border-pink-500"
-                        value={year} onChange={(e) => setYear(e.target.value)}
-                    />
-                    <div className="w-full xl:w-auto xl:flex-1 relative flex flex-col gap-2">
+                    <div className="flex flex-col gap-4 w-full xl:w-auto xl:flex-1">
+                        <input
+                            type="text" required placeholder="Movie Title"
+                            className="w-full bg-slate-900/50 border border-slate-700 rounded-lg p-3 outline-none focus:border-pink-500"
+                            value={title} onChange={(e) => setTitle(e.target.value)}
+                        />
+                        <div className="flex gap-4">
+                            <input
+                                type="number" placeholder="Year"
+                                className="w-1/2 bg-slate-900/50 border border-slate-700 rounded-lg p-3 outline-none focus:border-pink-500"
+                                value={year} onChange={(e) => setYear(e.target.value)}
+                            />
+                            <select
+                                value={rating || ''}
+                                onChange={(e) => setRating(e.target.value ? parseInt(e.target.value) : null)}
+                                className="w-1/2 bg-slate-900/50 border border-slate-700 rounded-lg p-3 outline-none focus:border-pink-500 text-slate-300"
+                            >
+                                <option value="">No Rating</option>
+                                <option value="1">1 Star</option>
+                                <option value="2">2 Stars</option>
+                                <option value="3">3 Stars</option>
+                                <option value="4">4 Stars</option>
+                                <option value="5">5 Stars</option>
+                            </select>
+                        </div>
+                        <textarea
+                            placeholder="Add notes about this movie..."
+                            className="w-full bg-slate-900/50 border border-slate-700 rounded-lg p-3 outline-none focus:border-pink-500 resize-none h-20"
+                            value={notes} onChange={(e) => setNotes(e.target.value)}
+                        />
+                    </div>
+                    <div className="w-full xl:w-auto relative flex flex-col gap-2 shrink-0">
                         <label className="text-xs text-slate-400 uppercase font-bold tracking-wider">Upload Poster</label>
                         <input
                             type="file"
                             accept="image/*"
                             onChange={handleImageUpload}
-                            className="w-full bg-slate-900/50 border border-slate-700 rounded-lg p-2 text-sm text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-500/20 file:text-pink-400 hover:file:bg-pink-500/30"
+                            className="w-full xl:w-48 bg-slate-900/50 border border-slate-700 rounded-lg p-2 text-sm text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-500/20 file:text-pink-400 hover:file:bg-pink-500/30"
                         />
+                        {isUploading && <p className="text-xs text-pink-400">Uploading...</p>}
                     </div>
-                    {posterUrl && <img src={posterUrl} alt="preview" className="h-16 w-12 object-cover rounded shadow-md mt-4 xl:mt-0" />}
-                    <button type="submit" className="w-full xl:w-auto mt-4 xl:mt-0 bg-gradient-to-r from-pink-600 to-purple-600 px-8 py-3 rounded-lg font-bold shadow-lg shadow-pink-500/20 hover:scale-105 transition-transform">
+                    {posterUrl && <img src={posterUrl} alt="preview" className="h-24 w-16 object-cover rounded shadow-md shrink-0" />}
+                    <button type="submit" disabled={isUploading} className="w-full xl:w-auto shrink-0 bg-gradient-to-r from-pink-600 to-purple-600 px-8 py-3 rounded-lg font-bold shadow-lg shadow-pink-500/20 hover:scale-105 transition-transform disabled:opacity-50">
                         Save
                     </button>
                 </form>
