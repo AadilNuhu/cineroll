@@ -1,0 +1,13 @@
+{
+  "buildCommand": "cd client && npm run build",
+  "outputDirectory": "client/dist",
+  "devCommand": "cd server && npm run dev",
+  "framework": "vite",
+  "root": ".",
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://cineroll-api.vercel.app/api/:path*"
+    }
+  ]
+}
