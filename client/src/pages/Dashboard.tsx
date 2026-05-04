@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import KanbanBoard from '../components/KanbanBoard';
 import { useMovies } from '../contexts/MovieContext';
-import api, { API_BASE_URL } from '../services/api';
 
 const Dashboard = () => {
     const { addMovie } = useMovies();
@@ -11,28 +10,12 @@ const Dashboard = () => {
     const [posterUrl, setPosterUrl] = useState('');
     const [rating, setRating] = useState<number | null>(null);
     const [notes, setNotes] = useState('');
-    const [isUploading, setIsUploading] = useState(false);
-
-    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            setIsUploading(true);
-            const formData = new FormData();
-            formData.append('poster', file);
-            try {
-                const res = await api.post('/upload', formData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                });
-                setPosterUrl(`${API_BASE_URL}${res.data.url}`);
-            } catch (err) {
-                console.error("Upload failed", err);
-                // Fallback for offline or dev
-                const reader = new FileReader();
-                reader.onloadend = () => setPosterUrl(reader.result as string);
-                reader.readAsDataURL(file);
-            } finally {
-                setIsUploading(false);
-            }
+            const reader = new FileReader();
+            reader.onloadend = () => setPosterUrl(reader.result as string);
+            reader.readAsDataURL(file);
         }
     };
 
@@ -113,10 +96,9 @@ const Dashboard = () => {
                             onChange={handleImageUpload}
                             className="w-full xl:w-48 bg-slate-900/50 border border-slate-700 rounded-lg p-2 text-sm text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-500/20 file:text-pink-400 hover:file:bg-pink-500/30"
                         />
-                        {isUploading && <p className="text-xs text-pink-400">Uploading...</p>}
                     </div>
                     {posterUrl && <img src={posterUrl} alt="preview" className="h-24 w-16 object-cover rounded shadow-md shrink-0" />}
-                    <button type="submit" disabled={isUploading} className="w-full xl:w-auto shrink-0 bg-gradient-to-r from-pink-600 to-purple-600 px-8 py-3 rounded-lg font-bold shadow-lg shadow-pink-500/20 hover:scale-105 transition-transform disabled:opacity-50">
+                    <button type="submit" className="w-full xl:w-auto shrink-0 bg-gradient-to-r from-pink-600 to-purple-600 px-8 py-3 rounded-lg font-bold shadow-lg shadow-pink-500/20 hover:scale-105 transition-transform">
                         Save
                     </button>
                 </form>
