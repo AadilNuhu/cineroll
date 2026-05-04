@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import KanbanBoard from '../components/KanbanBoard';
 import { useMovies } from '../contexts/MovieContext';
-import api from '../services/api';
+import api, { API_BASE_URL } from '../services/api';
 
 const Dashboard = () => {
     const { addMovie } = useMovies();
@@ -23,7 +23,7 @@ const Dashboard = () => {
                 const res = await api.post('/upload', formData, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
-                setPosterUrl(`http://localhost:9000${res.data.url}`);
+                setPosterUrl(`${API_BASE_URL}${res.data.url}`);
             } catch (err) {
                 console.error("Upload failed", err);
                 // Fallback for offline or dev
