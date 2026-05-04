@@ -1,9 +1,7 @@
 {
-  "buildCommand": "cd client && npm run build",
-  "outputDirectory": "client/dist",
-  "devCommand": "cd server && npm run dev",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
   "framework": "vite",
-  "root": ".",
   "rewrites": [
     {
       "source": "/api/:path*",
